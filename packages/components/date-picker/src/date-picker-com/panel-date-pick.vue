@@ -254,6 +254,9 @@ const isChangeToNow = ref(false)
 
 let isShortcut = false
 
+console.log('lang', lang.value)
+const BEYearDiff = ref<number>(543)
+
 const defaultTimeD = computed(() => {
   return dayjs(defaultTime).locale(lang.value)
 })
@@ -263,6 +266,11 @@ const month = computed(() => {
 })
 
 const year = computed(() => {
+  // custom for Thai BE
+  if (lang.value === 'th') {
+    return innerDate.value.year() + BEYearDiff.value
+  }
+
   return innerDate.value.year()
 })
 
@@ -354,16 +362,28 @@ const moveByYear = (forward: boolean) => {
 
 const currentView = ref('date')
 
+// ส่วนแสดงปีด้านบน
 const yearLabel = computed(() => {
   const yearTranslation = t('el.datepicker.year')
+
   if (currentView.value === 'year') {
     const startYear = Math.floor(year.value / 10) * 10
     if (yearTranslation) {
+      // custom for Thai BE
+      if (lang.value === 'th') {
+        return `ปี พ.ศ. ${startYear} - ${startYear + 9}`
+      }
+
       return `${startYear} ${yearTranslation} - ${
         startYear + 9
       } ${yearTranslation}`
     }
     return `${startYear} - ${startYear + 9}`
+  }
+
+  // custom for Thai BE
+  if (lang.value === 'th') {
+    return `ปี พ.ศ. ${year.value}`
   }
   return `${year.value} ${yearTranslation}`
 })
@@ -420,10 +440,16 @@ const handleMonthPick = async (month: number) => {
   handlePanelChange('month')
 }
 
+// เมื่อมีการเลือกปี
 const handleYearPick = async (
   year: number | YearsPickerEmits,
   keepOpen?: boolean
 ) => {
+  // custom for Thai BE
+  if (year && lang.value === 'th') {
+    year = (year as number) - BEYearDiff.value
+  }
+
   if (selectionMode.value === 'year') {
     innerDate.value = innerDate.value.startOf('year').year(year as number)
     emit(innerDate.value, false)
@@ -441,6 +467,7 @@ const handleYearPick = async (
   handlePanelChange('year')
 }
 
+//  เมื่อมีการเลือก เดือน หรือ ปี
 const showPicker = async (view: 'month' | 'year') => {
   currentView.value = view
   await nextTick()

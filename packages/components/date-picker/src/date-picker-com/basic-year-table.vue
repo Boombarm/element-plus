@@ -5,14 +5,39 @@
     :class="ns.b()"
     @click="handleYearTableClick"
   >
-    <tbody ref="tbodyRef">
+    <!-- custom for Thai BE -->
+    <tbody v-if="lang === 'th'" ref="tbodyRef">
       <tr v-for="(_, i) in 3" :key="i">
         <template v-for="(__, j) in 4" :key="i + '_' + j">
           <td
             v-if="i * 4 + j < 10"
-            :ref="
-              (el) =>
-                isSelectedCell(startYear + i * 4 + j) && (currentCellRef = el as HTMLElement)
+            :ref="(el) =>
+            isSelectedCell(startYear + 540 + i * 4 + j) && (currentCellRef = el as HTMLElement)
+            "
+            class="available"
+            :class="getCellKls(startYear + i * 4 + j)"
+            :aria-selected="`${isSelectedCell(startYear + i * 4 + j)}`"
+            :tabindex="isSelectedCell(startYear + 540 + i * 4 + j) ? 0 : -1"
+            @keydown.space.prevent.stop="handleYearTableClick"
+            @keydown.enter.prevent.stop="handleYearTableClick"
+          >
+            <div>
+              <span class="cell">{{ startYear + 540 + i * 4 + j }}</span>
+            </div>
+          </td>
+          <td v-else />
+        </template>
+      </tr>
+    </tbody>
+    <!-- End custom for Thai BE ================================================================== -->
+
+    <tbody v-else ref="tbodyRef">
+      <tr v-for="(_, i) in 3" :key="i">
+        <template v-for="(__, j) in 4" :key="i + '_' + j">
+          <td
+            v-if="i * 4 + j < 10"
+            :ref="(el) =>
+            isSelectedCell(startYear + i * 4 + j) && (currentCellRef = el as HTMLElement)
             "
             class="available"
             :class="getCellKls(startYear + i * 4 + j)"
@@ -59,6 +84,8 @@ const startYear = computed(() => {
   return Math.floor(props.date.year() / 10) * 10
 })
 
+console.log('lang', lang.value)
+
 const focus = () => {
   currentCellRef.value?.focus()
 }
@@ -67,14 +94,27 @@ const getCellKls = (year: number) => {
   const kls: Record<string, boolean> = {}
   const today = dayjs().locale(lang.value)
 
-  kls.disabled = props.disabledDate
-    ? datesInYear(year, lang.value).every(props.disabledDate)
-    : false
+  // custom for Thai BE
+  if (lang.value === 'th') {
+    kls.disabled = props.disabledDate
+      ? datesInYear(year, lang.value).every(props.disabledDate)
+      : false
 
-  kls.current =
-    castArray(props.parsedValue).findIndex((d) => d!.year() === year) >= 0
+    kls.current =
+      castArray(props.parsedValue).findIndex((d) => d!.year() + 543 === year) >=
+      0
 
-  kls.today = today.year() === year
+    kls.today = today.year() + 543 === year
+  } else {
+    kls.disabled = props.disabledDate
+      ? datesInYear(year, lang.value).every(props.disabledDate)
+      : false
+
+    kls.current =
+      castArray(props.parsedValue).findIndex((d) => d!.year() === year) >= 0
+
+    kls.today = today.year() === year
+  }
 
   return kls
 }
